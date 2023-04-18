@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -41,6 +42,7 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author Kohsuke Kawaguchi
  */
 public class BuildTimeoutWrapper extends BuildWrapper {
+    private static final Logger LOGGER = Logger.getLogger(BuildWrapper.class.getName());
 
     @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL", justification = "Diagnostic fields are left mutable so that groovy console can be used to dynamically turn/off probes.")
     public static long MINIMUM_TIMEOUT_MILLISECONDS = Long.getLong(BuildTimeoutWrapper.class.getName()+ ".MINIMUM_TIMEOUT_MILLISECONDS", 3 * 60 * 1000);
@@ -142,6 +144,8 @@ public class BuildTimeoutWrapper extends BuildWrapper {
                                 break;
                             }
                         } catch(RuntimeException e) {
+                            // Kenny, print error to console.
+                            listener.getLogger().println(op.getDescriptor().getDisplayName() + " error:" + e.getMessage());
                             // if some unexpected exception,
                             // mark the operation failed and pass through the exception.
                             operationFailed = true;

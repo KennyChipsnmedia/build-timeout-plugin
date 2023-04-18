@@ -99,6 +99,7 @@ public abstract class BuildTimeOutStrategy implements Describable<BuildTimeOutSt
 
     protected final String expandAll(@NonNull AbstractBuild<?, ?> build, @NonNull BuildListener listener, @NonNull String string)
             throws MacroEvaluationException, IOException, InterruptedException {
+
         return hasMacros(string) ? TokenMacro.expandAll(build, listener, string) : string;
     }
 
