@@ -13,7 +13,7 @@
   <version>1.30</version>
   <packaging>hpi</packaging>
 
-  <name>Build Timeout</name>
+  <name>[CNM]Build Timeout</name>
   <description>To terminate a build if it is taking too long</description>
   <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
   <licenses>
