@@ -54,6 +54,7 @@ public class AbortOperation extends BuildTimeOutOperation {
      */
     @Override
     public boolean perform(AbstractBuild<?, ?> build, BuildListener listener, long effectiveTimeout) {
+
         long effectiveTimeoutMinutes = MINUTES.convert(effectiveTimeout,MILLISECONDS);
         // Use messages in hudson.plugins.build_timeout.Messages for historical reason.
         listener.getLogger().println(hudson.plugins.build_timeout.Messages.Timeout_Message(

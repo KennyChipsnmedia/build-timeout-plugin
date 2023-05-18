@@ -11,7 +11,9 @@ import hudson.plugins.build_timeout.BuildTimeoutWrapper;
 import hudson.tasks.BuildWrapper;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
+import org.jfree.data.time.Minute;
 import org.joda.time.DateTime;
+import org.joda.time.Minutes;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -29,6 +31,7 @@ public class FusionTimeoutStrategy extends BuildTimeOutStrategy {
     private final String timeoutMinutes;
     private final String timeoutSecondsString;
     private DateTime startAt = DateTime.now();
+    private String reason = null;
 
 
     @Deprecated
@@ -63,10 +66,21 @@ public class FusionTimeoutStrategy extends BuildTimeOutStrategy {
             expandAll(build, listener, getTimeoutMinutes())));
         long noactTimeout = Long.parseLong(expandAll(build, listener, getTimeoutSecondsString())) * 1000L;
 
-        startAt = DateTime.now();
-        LOGGER.log(Level.INFO, build.getParent().getFullName() + " FUSION ABS_TIMEOUT:" + absTimeout + " min," + " NO_ACTIVITY_TIMEOUT:" + noactTimeout + " sec.");
+        DateTime now = DateTime.now();
 
+        startAt = new DateTime(now);
+
+        DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
+        DateTime absDeadLine = now.plusMinutes(Integer.parseInt(timeoutMinutes));
+        DateTime noactDeadline = now.plusSeconds(Integer.parseInt(timeoutSecondsString));
+        String whichTimeout = noactTimeout < absTimeout ? "NO_ACTIVITY_TIMEOUT" : "ABS_TIMEOUT";
+        DateTime deadline = noactTimeout < absTimeout ? noactDeadline : absDeadLine;
+
+        int duration = Math.abs(Minutes.minutesBetween(startAt, deadline).getMinutes());
+
+        reason = "Reason: " + whichTimeout + " from: " + dtf.print(now) + " to: " + dtf.print(deadline) + ", duration:" + duration + " min";
         return Math.min(absTimeout, noactTimeout);
+
     }
 
     @Override
@@ -78,15 +92,17 @@ public class FusionTimeoutStrategy extends BuildTimeOutStrategy {
 
         if (env != null) {
             DateTime now = DateTime.now();
-            DateTime deadLine = startAt.plusMinutes(Integer.parseInt(timeoutMinutes));
-            DateTime aliveLine = now.plusSeconds(Integer.parseInt(timeoutSecondsString));
+            DateTime absDeadLine = startAt.plusMinutes(Integer.parseInt(timeoutMinutes));
+            DateTime noactDeadline = now.plusSeconds(Integer.parseInt(timeoutSecondsString));
 
-            if(!aliveLine.isAfter(deadLine)) {
-                LOGGER.log(Level.INFO, build.getParent().getFullName() + " RESCHEDULE_Y alive: " + dtf.print(aliveLine) + " < deadLine: " + dtf.print(deadLine));
+            if(!noactDeadline.isAfter(absDeadLine)) {
+                int duration = Math.abs(Minutes.minutesBetween(startAt, noactDeadline).getMinutes());
+                reason = "Reason: NO_ACTIVITY_TIMEOUT from: " + dtf.print(now) + " to: " + dtf.print(noactDeadline) + ", duration:" + duration + " min";
                 env.rescheduleIfScheduled();
             }
             else {
-                LOGGER.log(Level.INFO, build.getParent().getFullName() + " RESCHEDULE_N alive: " + dtf.print(aliveLine) + " > deadLine: " + dtf.print(deadLine));
+                int duration = Math.abs(Minutes.minutesBetween(startAt, absDeadLine).getMinutes());
+                reason = "Reason: ABS_TIMEOUT from: " + dtf.print(startAt) + " to: " + dtf.print(absDeadLine) + ", duration:" + duration + " min";
             }
         }
     }
@@ -94,6 +110,11 @@ public class FusionTimeoutStrategy extends BuildTimeOutStrategy {
     @Override
     public Descriptor<BuildTimeOutStrategy> getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    @Override
+    public String getReason() {
+        return reason;
     }
 
     @Override

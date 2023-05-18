@@ -77,11 +77,17 @@ public class BuildStepWithTimeout extends Builder implements BuildStep {
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "No adequate replacement for Trigger.timer found")
     public boolean perform(final Build<?,?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
         final Timer timer = Trigger.timer; // FIXME TODO replace with Timer
+
+        // Kenny checked.
         final long delay = getTimeout(build, listener);
 
         final TimerTask task = new SafeTimerTask() {
             @Override
             public void doRun() {
+                if( strategy.getReason() != null) {
+                    listener.getLogger().println(strategy.getReason());
+                }
+
                 if (operationList.isEmpty()) {
                     new AbortOperation().perform(build, listener, delay);
                 }

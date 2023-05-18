@@ -138,6 +138,10 @@ public class BuildTimeoutWrapper extends BuildWrapper {
                         opList = Arrays.<BuildTimeOutOperation>asList(new AbortOperation());
                     }
                     for( BuildTimeOutOperation op: opList ) {
+                        if(strategy.getReason() != null) {
+                            listener.getLogger().println(strategy.getReason());
+                        }
+
                         try {
                             if (!op.perform(build, listener, effectiveTimeout)) {
                                 operationFailed = true;

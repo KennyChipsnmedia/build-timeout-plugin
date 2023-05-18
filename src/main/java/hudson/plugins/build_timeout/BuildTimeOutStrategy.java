@@ -87,6 +87,10 @@ public abstract class BuildTimeOutStrategy implements Describable<BuildTimeOutSt
             return false;
         }
     }
+
+    public String getReason() {
+        return null;
+    }
     
     /**
      * @return
